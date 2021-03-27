@@ -1,0 +1,20 @@
+# multistage
+
+# FROM=imagem de origem AS=alias
+# workdir=
+# RUN=comando a ser executado. RUN<command> ou RUN["executable", "param1", "param2"]
+# COPY=copia arquivos ou diretórios da origem para o caminho destino no filesystem do container
+# COPY . . = copy everything from the same place as the dockerfile, to “where i am now” in the container.
+# The “where i am now” in the image/container is defined by https://docs.docker.com/engine/reference/builder/#workdir 
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+WORKDIR /src
+COPY myApi.csproj .
+RUN dotnet restore
+COPY . .
+RUN dotnet publish -c release -o /app
+
+# Criar o diretório app e depois copia o conteúdo de build/app para o diretório /app da imagem
+FROM mcr.microsoft.com/dotnet/aspnet:5.0
+WORKDIR /app
+COPY --from=build /app .
+ENTRYPOINT ["dotnet", "myApi.dll"]
